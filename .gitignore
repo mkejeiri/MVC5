@@ -1,0 +1,13 @@
+bin
+obj
+packages/*
+TestResults
+.vs
+bin/
+obj/
+TestResults/
+.vs/
+*.dll
+*.log
+App_Data/*
+AutomaticTellerMachine/App_Data/*

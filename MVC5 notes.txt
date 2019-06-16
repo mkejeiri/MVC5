@@ -1,0 +1,142 @@
+https://www.youtube.com/watch?v=zWFoZb6EiwU
+1- Routing: mapping of web request into controller action
+in home controller we have :
+		public ActionResult Serial(string letterCase)
+        {
+            var serial = "ASPNETMVC5ATM1";
+            if (letterCase == "lower")
+            {
+                return Content(serial.ToLower());
+            }
+            //return Content(serial);
+            //return new HttpStatusCodeResult(403);
+            //return Json(new { name = "serial", value = serial }, JsonRequestBehavior.AllowGet);
+           return RedirectToAction("Index", "Home");
+            
+
+(a) used only for  http://localhost:49198/serial?letterCase=lower
+
+            routes.MapRoute(
+               name: "Serial Number",
+               url: "Serial",
+               defaults: new { controller = "Home", action = "Serial" }
+           );
+
+b) used only for  http://localhost:49198/serial/lower
+           routes.MapRoute(
+              name: "Serial Number",
+              url: "Serial/{letterCase}",
+              defaults: new { controller = "Home", action = "Serial", letterCase = "upper" }
+          );
+c)anything that match {controller}/{action}/{id} goes through here (id is optional and controller or action not assigned by default use controller=home/action=index)
+		routes.MapRoute(
+                name: "Default",
+                url: "{controller}/{action}/{id}",
+                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+            );
+
+request http://localhost:49198/serial/lower  with only b) and c) 
+1.1- if c) is before b) : it will look in controller=serial an action named index :  url: "{controller}/{action}/{id}",defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+1.2 if b) before c) it will use b) route and it will pass 
+
+ 
+request http://localhost:49198/serial/lower  with only a) and c) 
+1.3- gives an error since there is no action with name serial
+
+http://localhost:49198/serial?letterCase=lower  with only a) and c) 
+1.4- it will pass, because it looks for letterCase in queryString params and in post params...
+
+
+
+-2 ViewData VS ViewBag VS TempData : https://www.c-sharpcorner.com/blogs/viewdata-vs-viewbag-vs-tempdata-in-mvc1
+
+-3. Actions 
+-3.1 Actions selectors: HttpPost, HttpGet, [Route("home/create")]..
+example:
+		//Get /home/Index
+		[ActionName("about-this-atm")]
+		public ActionResult About()
+        {
+            ViewBag.Message = "Your application description page.";
+            //Must provide explicit view name otherwise it will look for about-this-atm.{cshtml,vbhtml,aspx,ascx}
+            //in Views/Home or in Views/Shared
+            //if you provide a full path you need to specify also the extension: return View("~/Views/Home/About.cshtml");
+            return View("About");
+         n}
+3.2- Authorization filters: Authorize, AllowAnonymous...
+3.3- Action filters:wrap the execution body (before/after or both) of an action applied after Authorization filters
+3.3.1 create a custom action filter
+	public class MyLoggingFilterAttribute : ActionFilterAttribute
+    {
+	
+	 public override void OnActionExecuting (ActionExecutedContext filterContext)
+        {
+          //Do you stuff here
+            base.OnActionExecuted(filterContext);
+        }
+
+        public override void OnActionExecuted(ActionExecutedContext filterContext)
+        {
+            HttpRequestBase request = filterContext.HttpContext.Request;
+            Logger.logRequest(request.UserHostAddress);
+            base.OnActionExecuted(filterContext);
+        }
+    }
+3.3.2 - Add it to 
+	public class FilterConfig
+    {
+        public static void RegisterGlobalFilters(GlobalFilterCollection filters)
+        {
+            filters.Add(new HandleErrorAttribute());
+            filters.Add(new MyLoggingFilterAttribute());
+        }
+    }
+	
+
+3.4- Result filters: wraps the result execution of an action, OutputCache
+3.5- Exception filters: run when unhandled exception is thrown during the execution of an action, example HandleErrorAttribute in the FilterConfig class
+we could specify different views for different errors/excpetions, we should enable custom error to on.
+        [HandleError(View = "MathError", ExceptionType = typeof(DivideByZeroException))]
+        [HandleError(View = "SOError", ExceptionType = typeof(StackOverflowException))]
+		public ActionResult Contact() {...}
+
+4. Swithing fron razor into HTML syntax: <TEXT>...</TEXT> or @:, to escape @ use @@
+
+5. Bundlle and CDN in BundleConfig.cs file
+ bundles.Add(new ScriptBundle("~/bundles/jquery", "https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js").Include(
+                        "~/Scripts/jquery-{version}.js"));
+						...
+set also  
+			BundleTable.EnableOptimizations = true;
+            bundles.UseCdn = true;
+			
+In Web config change <compilation debug="true" targetFramework="4.6.1" /> to <compilation debug="false" targetFramework="4.6.1" />
+now we get a bundles of css and js versioned, so if it changes the version will be changed and the client will be forced to get it from client.
+
+
+6. Code first migrations : go to nuget console
+Enable-Migrations -ContextType ApplicationDbContext -->will create migrations files
+Add-Migration AccountNumberChanges
+Update-Database -Script (will create the script for the db migrations)
+Update-Database -Verbose (will apply db migrations immediately without creating a script)
+Update-Database -TargetMigration InitialCreate (to rollback to a specific migrations)
+Update-Database -Verbose -Force
+
+7. Ajax : requires Nuget Ms ajax unobtrusive, i.e  it requires a ref to jquery.unobtrusive-ajax.min.js script 
+<div id="formSection">
+    <h3>@ViewBag.TheMessage</h3>
+    @using (Ajax.BeginForm(new AjaxOptions {HttpMethod = "post", InsertionMode = InsertionMode.Replace, UpdateTargetId = "formSection"}))
+    {
+        <textarea name="message"></textarea>
+        <br/>
+        <input type="submit" value="send"/>
+    }
+</div>
+
+InsertionMode.Replace: replace the content HTML specified with UpdateTargetId, not the element itself. 
+					  An insertion mode that destroyed the element it worked with wouldn't be very useful for the reason  mentioned: you'd only be able to use it once.
+InsertionMode.ReplaceWith: replace the element itself specified with UpdateTargetId , replaces the DOM node itself, not just the inner html
+
+
+
+

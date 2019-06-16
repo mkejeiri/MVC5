@@ -1,0 +1,141 @@
+﻿@{
+    ViewBag.Title = "Contact";
+}
+<h2>@ViewBag.Title</h2>
+
+<address>
+    One Microsoft Way<br />
+    Redmond, WA 98052-6399<br />
+    <abbr title="Phone">P:</abbr>
+    425.555.0100
+</address>
+
+<address>
+    <strong>Support:</strong>   <a href="mailto:Support@example.com">Support@example.com</a><br />
+    <strong>Marketing:</strong> <a href="mailto:Marketing@example.com">Marketing@example.com</a>
+</address>
+<br />
+
+<div id="formSection">
+    <h3>@ViewBag.TheMessage</h3>
+    <form method="post" id="contactForm">
+        <textarea name="message" id="message" maxlength="150" data-bind="value:message, valueUpdate:'input'"></textarea>
+        <br />
+        <input type="submit" value="send" /> <br />
+        <span data-bind="text:charactersRemaining"></span> Characters Remaining
+    </form>
+    <img src="~/Content/Images/progress.gif" id="progressImage" style="display: none" />
+</div>
+
+<!-- case 3 using knockout -->
+@section scripts
+{
+    <script src="~/Scripts/knockout-3.4.0.js"></script>
+    <script>
+        function ContactViewModel() {
+            var self = this;
+            self.message = ko.observable('');
+            self.charactersRemaining = ko.computed(function () {
+                //note we call message() as a function because it's an observable
+                return (150 - self.message().length);
+            });
+        }
+        //to activate the binding we need to call applyBindings and pass an instance of ContactViewModel
+        ko.applyBindings(new ContactViewModel());
+    </script>
+    <script>
+        $(function() {
+            $('#contactForm').submit(function() {
+                //$.post('@Url.Action()');
+                //as soon as submit is done, everthing inside formSection div disappear
+                //we could show the progress
+                $("#contactForm").hide();
+                $("#progressImage").show();
+                $.post('', { message: $('#message').val() })
+                    .done(function (response) {
+                        // $('#formSection').html(response);
+                        //introduce a delay so we can see the image
+                        setTimeout(function () { $('#formSection').html(response); }, 10000);
+                    });
+                //this will avoid the submit preventDefaut behaviour of the entire page.
+                return false;
+            });
+        });
+    </script>
+}
+
+
+<!-- case 1 -->
+@*<div id="formSection">
+        @using (Ajax.BeginForm(new AjaxOptions {HttpMethod = "post", InsertionMode = InsertionMode.Replace, UpdateTargetId = "formSection"}))
+        {
+            <textarea name="message"></textarea>
+            <br/>
+            <input type="submit" value="send"/>
+        }
+    </div>
+
+       @section scripts
+    {
+        <script src="~/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+       }
+*@
+<!-- case 2 -->
+@*@section scripts
+    {
+        <script>
+            $(function() {
+                $('#contactForm').submit(function() {
+                    //$.post('@Url.Action()');
+                    //as soon as submit is done, everthing inside formSection div disappear
+                    //we could show the progress
+                    $("#progressImage").show();
+                    $.post('', { message: $('#message').val() })
+                        .done(function (response) {
+                            // $('#formSection').html(response);
+                            //introduce a delay so we can see the image
+                            setTimeout(function () { $('#formSection').html(response); }, 10000);
+                        });
+                    //this will avoid the submit preventDefaut behaviour of the entire page.
+                    return false;
+                });
+            });
+        </script>
+    }*@
+@*@section scripts
+        {
+        <script src="~/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+        <script src="~/Scripts/knockout-3.4.0.js"></script>
+        <script>
+            function ContactViewModel() {
+                var self = this;
+                self.message = ko.observable('');
+                self.charactersRemaining = ko.computed(function () {
+                    return 150 - self.message().length;
+                });
+            }
+            ko.applyBindings(new ContactViewModel());
+
+            //function ContactViewModel() {
+            //    this.message = ko.observable('');
+            //    this.charactersRemaining = ko.computed(function () {
+            //        return 150 - this.message().length;
+            //    },this)
+            //}
+            //ko.applyBindings(new ContactViewModel());
+        </script>
+        <script>
+            /*var resp;
+            var msg;*/
+            $('#contactForm').submit(function () {
+                $('#progress').show();
+                //  msg = { message: $('#message').val() };
+                $.post('', { message: $('#message').val() })
+                    .done(function (response) {
+                        // resp = response;
+                        setTimeout(function () { $('#formSection').html(response) }, 2000);
+                    });
+                return false;
+            });
+        </script>
+    }*@
